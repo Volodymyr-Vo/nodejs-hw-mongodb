@@ -4,7 +4,7 @@ import {
   getContactByIdController,
   createContactController,
   patchContactController,
-  deleteCotactController,
+  deleteContactController,
 } from '../controllers/contacts.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { validateBody } from '../middlewares/validateBody.js';
@@ -40,7 +40,7 @@ router.patch(
 router.delete(
   '/contacts/:contactId',
   isValidId,
-  ctrlWrapper(deleteCotactController),
+  ctrlWrapper(deleteContactController),
 );
 
 router.use((req, res) => {
