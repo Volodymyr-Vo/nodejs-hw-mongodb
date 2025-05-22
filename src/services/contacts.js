@@ -10,35 +10,67 @@ export const getContacts = async ({
   filter = {},
   userId,
 }) => {
+  console.log('🔍 getContacts called with:', {
+    page,
+    perPage,
+    sortBy,
+    sortOrder,
+    filter,
+    userId,
+  });
+
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
   const contactsQuery = Contact.find({ userId });
 
-  if (filter.contactType) {
+  if (Array.isArray(filter.contactType) && filter.contactType.length > 0) {
     contactsQuery.where('contactType').in(filter.contactType);
   }
 
-  if (filter.isFavourite) {
-    contactsQuery.where('isFavourite').eq(filter.isFavourite);
+  if (filter.isFavourite !== undefined) {
+    contactsQuery
+      .where('isFavourite')
+      .eq(filter.isFavourite === 'true' || filter.isFavourite === true);
   }
 
-  const [contactsCount, contacts] = await Promise.all([
-    Contact.find({ userId }).merge(contactsQuery).countDocuments(),
+  const filters = { userId };
 
-    contactsQuery
-      .skip(skip)
-      .limit(limit)
-      .sort({ [sortBy]: sortOrder })
-      .exec(),
-  ]);
+  if (filter.contactType) {
+    filters.contactType = { $in: filter.contactType };
+  }
 
-  const paginationData = calculatePaginationData(contactsCount, perPage, page);
+  if (filter.isFavourite !== undefined) {
+    filters.isFavourite = filter.isFavourite;
+  }
 
-  return {
-    data: contacts,
-    ...paginationData,
-  };
+  try {
+    const [contactsCount, contacts] = await Promise.all([
+      Contact.countDocuments(filters),
+      Contact.find(filters)
+        .skip(skip)
+        .limit(limit)
+        .sort({ [sortBy]: sortOrder })
+        .exec(),
+    ]);
+
+    const paginationData = calculatePaginationData(
+      contactsCount,
+      perPage,
+      page,
+    );
+
+    return {
+      data: contacts,
+      ...paginationData,
+    };
+  } catch (error) {
+    console.error('getContacts crashed in DB request:', {
+      message: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  }
 };
 
 export const getContactById = (contactId, userId) =>
