@@ -10,7 +10,7 @@ export const getContacts = async ({
   filter = {},
   userId,
 }) => {
-  console.log('🔍 getContacts called with:', {
+  console.log('getContacts called with:', {
     page,
     perPage,
     sortBy,
@@ -22,7 +22,7 @@ export const getContacts = async ({
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
-  const contactsQuery = Contact.find({ userId });
+  const contactsQuery = Contact.find({ owner: userId });
 
   if (Array.isArray(filter.contactType) && filter.contactType.length > 0) {
     contactsQuery.where('contactType').in(filter.contactType);
@@ -34,7 +34,7 @@ export const getContacts = async ({
       .eq(filter.isFavourite === 'true' || filter.isFavourite === true);
   }
 
-  const filters = { userId };
+  const filters = { owner: userId };
 
   if (filter.contactType) {
     filters.contactType = { $in: filter.contactType };
@@ -74,7 +74,7 @@ export const getContacts = async ({
 };
 
 export const getContactById = (contactId, userId) =>
-  Contact.findOne({ _id: contactId, userId });
+  Contact.findOne({ _id: contactId, owner: userId });
 
 export const createContact = async (payload) => {
   const contact = await Contact.create(payload);
@@ -84,7 +84,7 @@ export const createContact = async (payload) => {
 export const deleteContact = async (contactId, userId) => {
   const contact = await Contact.findOneAndDelete({
     _id: contactId,
-    userId,
+    owner: userId,
   });
   return contact;
 };
@@ -96,7 +96,7 @@ export const updateContact = async (
   options = {},
 ) => {
   const rawResult = await Contact.findOneAndUpdate(
-    { _id: contactId, userId },
+    { _id: contactId, owner: userId },
     payload,
     {
       new: true,
