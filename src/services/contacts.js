@@ -22,7 +22,7 @@ export const getContacts = async ({
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
-  const contactsQuery = Contact.find({ owner: userId });
+  const contactsQuery = Contact.find({ userId });
 
   if (Array.isArray(filter.contactType) && filter.contactType.length > 0) {
     contactsQuery.where('contactType').in(filter.contactType);
@@ -34,20 +34,11 @@ export const getContacts = async ({
       .eq(filter.isFavourite === 'true' || filter.isFavourite === true);
   }
 
-  const filters = { owner: userId };
-
-  if (filter.contactType) {
-    filters.contactType = { $in: filter.contactType };
-  }
-
-  if (filter.isFavourite !== undefined) {
-    filters.isFavourite = filter.isFavourite;
-  }
-
   try {
     const [contactsCount, contacts] = await Promise.all([
-      Contact.countDocuments(filters),
-      Contact.find(filters)
+      Contact.find({ userId }).merge(contactsQuery).countDocuments(),
+      Contact.find({ userId })
+        .merge(contactsQuery)
         .skip(skip)
         .limit(limit)
         .sort({ [sortBy]: sortOrder })
