@@ -38,8 +38,6 @@ router.patch(
 
 router.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
 
-router.get('/', ctrlWrapper(getContactsController));
-
 router.use((req, res) => {
   res.status(404).send({
     message: 'Not found',
